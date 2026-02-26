@@ -71,7 +71,6 @@
     }
   </style>
 </head>
-
 <body>
   <div class="container">
 
@@ -83,7 +82,6 @@
       <button onclick="signUp()">Sign Up</button>
       <button onclick="login()">Login</button>
       <p id="authMessage"></p>
-      <div id="authSection"></div>
     </div>
 
     <!-- TODO SECTION -->
@@ -101,65 +99,78 @@
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
     const supabase = createClient(
-      'https://abcpnfurwdptggvnsavu.supabase.co',
+      'https://abcpnfurwdptggvnsavu.supabase.co', 
       'sb_publishable_HCUXseEDVZN4Qxj7_ZJytw_bu6rFqYk'
     )
 
     const authSection = document.getElementById('authSection')
     const todoSection = document.getElementById('todoSection')
+    const todoList = document.getElementById('todoList')
 
-    // CHECK SESSION
+    // CHECK SESSION ON LOAD
     const { data: { session } } = await supabase.auth.getSession()
-    if (session) showTodos()
+    if (session?.user) showTodos()
 
-   async function signUp() {
-  const email = document.getElementById('email').value
-  const password = document.getElementById('password').value
+    // SIGN UP
+    async function signUp() {
+      const email = document.getElementById('email').value
+      const password = document.getElementById('password').value
 
-  const { error } = await supabase.auth.signUp({ email, password })
+      const { error } = await supabase.auth.signUp({ email, password })
 
-  if (error) {
-    document.getElementById('authMessage').textContent = error.message
-  } else {
-    document.getElementById('authMessage').textContent = 
-      "Signup successful! Check your email."
-  }
-}
+      if (error) {
+        document.getElementById('authMessage').textContent = error.message
+      } else {
+        document.getElementById('authMessage').textContent = 
+          "Signup successful! Check your email to confirm."
+      }
+    }
 
-async function login() {
-  const email = document.getElementById('email').value
-  const password = document.getElementById('password').value
+    // LOGIN
+    async function login() {
+      const email = document.getElementById('email').value
+      const password = document.getElementById('password').value
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (error) {
-    document.getElementById('authMessage').textContent = error.message
-  } else {
-    showTodos()
-  }
-}
+      if (error) {
+        document.getElementById('authMessage').textContent = error.message
+      } else {
+        showTodos()
+      }
+    }
 
+    // LOGOUT
     async function logout() {
       await supabase.auth.signOut()
       location.reload()
     }
 
+    // SHOW TODO SECTION
     function showTodos() {
       authSection.classList.add('hidden')
       todoSection.classList.remove('hidden')
       loadTodos()
     }
 
+    // ADD TODO
     async function addTodo() {
+      const { data: { user } } = await supabase.auth.getUser()
       const title = document.getElementById('todoInput').value
+      if (!title) return
 
-await supabase.from('todos').insert([
-  { title: title, user_id: user.id }
-])
+      await supabase.from('todos').insert([
+        { title: title, user_id: user.id }
+      ])
+      document.getElementById('todoInput').value = ''
+      loadTodos()
     }
 
+    // LOAD TODOS
     async function loadTodos() {
-      const { data } = await supabase.from('todos').select('*')
+      const { data: { user } } = await supabase.auth.getUser()
+      const { data } = await supabase.from('todos').select('*').eq('user_id', user.id)
+
       todoList.innerHTML = ''
       data.forEach(todo => {
         const li = document.createElement('li')
@@ -171,16 +182,19 @@ await supabase.from('todos').insert([
       })
     }
 
+    // DELETE TODO
     async function deleteTodo(id) {
       await supabase.from('todos').delete().eq('id', id)
       loadTodos()
     }
 
+    // EXPORT FUNCTIONS TO GLOBAL
     window.signUp = signUp
     window.login = login
     window.logout = logout
     window.addTodo = addTodo
     window.deleteTodo = deleteTodo
+
   </script>
 </body>
 </html>
