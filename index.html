@@ -128,17 +128,19 @@
 
     // LOGIN
     async function login() {
-      const email = document.getElementById('email').value
-      const password = document.getElementById('password').value
+  // Get values from input fields
+  const email = document.getElementById('email').value
+  const password = document.getElementById('password').value
 
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+  // Sign in with Supabase
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-      if (error) {
-        document.getElementById('authMessage').textContent = error.message
-      } else {
-        showTodos()
-      }
-    }
+  if (error) {
+    document.getElementById('authMessage').textContent = error.message
+  } else {
+    showTodos()
+  }
+}
 
     // LOGOUT
     async function logout() {
